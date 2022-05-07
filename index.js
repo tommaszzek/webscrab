@@ -10,7 +10,7 @@ let decriptionpages;
 
 async function dateToSave(data,name){
     
-    new ObjectsToCsv(data).toDisk(`./${name}.csv`, { append: true }); //dodawanie do pliku
+    new ObjectsToCsv(data).toDisk(`./data/${name}.csv`, { append: true }); //dodawanie do pliku
     // new ObjectsToCsv(sampleData).toDisk(`./${name}.csv`); // tworzy nowey plik bez dodawania 
 
 }
