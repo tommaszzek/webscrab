@@ -3,8 +3,8 @@ const cheerio =require('cheerio');
 const ObjectsToCsv = require('objects-to-csv');
 
 
-const url='https://allegro.pl/kategoria/akcesoria-dysze-318741?order=qd';
-const url_name="akcesoria-dysze"
+const url='https://allegro.pl/kategoria/komputery?order=qd';
+const url_name="Komutery"
 let broswer;
 let decriptionpages;
 
@@ -16,7 +16,16 @@ async function dateToSave(data,name){
 }
 
 
+function resReg(text,reg) {  
+     const regres=text.match(reg);
+     let result='0';
+        if(regres[0]!=null) {result=regres[0]} else {result=0;}
+     return result;     
+// searching the phone number pattern
+// const regex2 = /(\d{3})\D(\d{3})-(\d{4})/g;
+// const result3 = regex2.exec('My phone number is: 555 123-4567.');
 
+}
 async function scrapHomeIndex(url,page){
     try{
     console.log(url);
@@ -33,13 +42,26 @@ async function scrapHomeIndex(url,page){
             let cena_d = $(element).find('div.mqu1_g3').text();
             let ilosc_z = $(element).find('span.msa3_z4').text();
             let spon = $(element).find('div._6a66d_qjI85').text();
+            let s=$(element).find('span').hasClass('_6a66d_fIdpb');
             let ads;
-            if(spon=="Oferta sponsorowana"){ ads="ADS"} else {ads='NO_ADS'}
+            if(spon=="Oferta sponsorowana"){ ads=1} else {ads=0}
+
+            
+                     
+            let cena_dost=resReg(cena_d,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/gm);
+            let cena_prod=resReg(cena,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/gm);
+            // cena_d=cena_dost[0];
+
+            // ilosc_z=resReg(ilosc_z,/\d|\d\d|\d\d\d|\d\d\d\d|\d\d\d\d\d/);
+            
             // POBIERANIE ZDJECIA ZE STRONY DOPSIAC 
             // DANE KONTAKTOWE FIRMY 
             // regexp=/Dane firmy(?:(?!Dane|Konkat).)*Kontakt/gm
+            // reg exp dane format ceny \d,\d\d|\d\d,\d\d|\d\d\d,\d\d|\d\d\d|\d\d\d\d
            let id=i
            let quot=0;
+           let smart
+           if(s==true){ smart=1} else {smart=0}
            if(quot==0){
              let q=$("div[role='navigation']>span").text(); // ilosc podstron na stronie      
              quot=q.substr(0,q.length/2);
@@ -47,12 +69,12 @@ async function scrapHomeIndex(url,page){
            
                     // let c=i+';'+';'+s+';'+name+';'+cena+';'+cena_d+';'+ilosc_z+';'+link;
             if(name!=undefined){
-                return {id,ads,name,cena,cena_d,ilosc_z,link,quot};
+                return {id,ads,name,cena_prod,cena_dost,ilosc_z,link,smart,quot};
             }
 
     }).get();
    
-
+        
  
     
     return homes;
@@ -101,35 +123,36 @@ async function getAdress(url){
         if(i==0){
 
             dane= await scrapHomeIndex(url,decriptionpages); 
-            await dateToSave(dane,url_name); 
-            // console.log(dane);
-            ogr=Number(dane[0].quot);//  tutaj będzie problem z danymi
-            for(j=2;j<=ogr;j++){
-                console.log(j);
-                      let  curl=url+'&p='+j
-                        dane= await scrapHomeIndex(curl,decriptionpages); 
-                        await dateToSave(dane,url_name); 
+            // await dateToSave(dane,url_name); 
+            console.log(dane);
+            // ogr=Number(dane[0].quot);
+            // for(j=2;j<=ogr;j++){
+                
+            //           let  curl=url+'&p='+j
+            //             dane= await scrapHomeIndex(curl,decriptionpages); 
+            //             console.log(dane);
+            //             // await dateToSave(dane,url_name); 
                       
-            }
+            // }
             
             }
-        if(i>0){
-            // console.log(ogr);
-            for(j=2;j<=ogr;j++){
-                console.log(j);
-                      let  curl='https://allegro.pl'+link_category[i].link+'&p='+j
-                        dane= await scrapHomeIndex(curl,decriptionpages); 
-                        await dateToSave(dane,link_category[i].link_name); 
+        // if(i>0){
+        //     // console.log(ogr);
+        //     for(j=2;j<=ogr;j++){
+        //         // console.log(j);
+        //               let  curl='https://allegro.pl'+link_category[i].link+'&p='+j
+        //                 dane= await scrapHomeIndex(curl,decriptionpages); 
+        //                // await dateToSave(dane,link_category[i].link_name); 
                       
-            }
-            let curl='https://allegro.pl'+link_category[i].link;
-            dane= await scrapHomeIndex(curl,decriptionpages); 
-            await dateToSave(dane,link_category[i].link_name); 
-            // console.log(dane);
-            ogr=Number(dane[0].quot);
+        //     }
+        //     let curl='https://allegro.pl'+link_category[i].link;
+        //     dane= await scrapHomeIndex(curl,decriptionpages); 
+        //    // await dateToSave(dane,link_category[i].link_name); 
+        //     // console.log(dane);
+        //     ogr=Number(dane[0].quot);
             
 
-        }
+        // }
     }
 
     
