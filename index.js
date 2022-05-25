@@ -16,7 +16,7 @@ async function dateToSave(data,name){
 }
 
 
-function resReg(text,reg) {  
+ function resReg(text,reg) {  
      const regres=text.match(reg);
      let result='0';
         if(regres[0]!=null) {result=regres[0]} else {result=0;}
@@ -50,6 +50,7 @@ async function scrapHomeIndex(url,page){
                      
             let cena_dost=resReg(cena_d,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/gm);
             let cena_prod=resReg(cena,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/gm);
+            console.log(cena_prod);
             // cena_d=cena_dost[0];
 
             // ilosc_z=resReg(ilosc_z,/\d|\d\d|\d\d\d|\d\d\d\d|\d\d\d\d\d/);
@@ -69,7 +70,7 @@ async function scrapHomeIndex(url,page){
            
                     // let c=i+';'+';'+s+';'+name+';'+cena+';'+cena_d+';'+ilosc_z+';'+link;
             if(name!=undefined){
-                return {id,ads,name,cena_prod,cena_dost,ilosc_z,link,smart,quot};
+                return {id,ads,name,cena,cena_dost,ilosc_z,link,smart,quot};
             }
 
     }).get();
