@@ -1,41 +1,45 @@
 const puppeter = require('puppeteer');
-const cheerio =require('cheerio');
+const cheerio = require('cheerio');
+const fs = require('fs');
+const { find } = require('cheerio/lib/api/traversing');
 const ObjectsToCsv = require('objects-to-csv');
 
 
-const url='https://allegro.pl/kategoria/komputery?order=qd';
-const url_name="Komutery"
+const data = 'https://allegro.pl/kategoria/czesci-do-laptopow-77801?order=qd';
 let broswer;
 let decriptionpages;
-
+let zm = 0;
 async function dateToSave(data,name){
     
     new ObjectsToCsv(data).toDisk(`./data/${name}.csv`, { append: true }); //dodawanie do pliku
     // new ObjectsToCsv(sampleData).toDisk(`./${name}.csv`); // tworzy nowey plik bez dodawania 
 
 }
-
-
- function resReg(text,reg) {  
-     const regres=text.match(reg);
-     let result='0';
-        if(regres[0]!=null) {result=regres[0]} else {result=0;}
-     return result;     
+function resReg(text,reg) {  
+    const regres=text.match(reg);
+    let result='0';
+       if(regres[0]!=null) {result=regres[0]} else {result=0;}
+    return result;     
 // searching the phone number pattern
 // const regex2 = /(\d{3})\D(\d{3})-(\d{4})/g;
 // const result3 = regex2.exec('My phone number is: 555 123-4567.');
 
 }
-async function scrapHomeIndex(url,page){
-    try{
-    console.log(url);
 
-    await page.goto(url,{waitUntil:"networkidle2"});
-    const html= await page.evaluate(()=>document.body.innerHTML);
-    const $= await cheerio.load(html);
-     
+async function scrapHomeIndex(url) {
+    try {
 
-    const  homes= $("article").map((i,element)=>{
+        const page = await broswer.newPage()
+        await page.goto(url, { waitUntil: "networkidle2" });
+        if (zm == 0) {
+            await page.click('[data-role="accept-consent"]');
+            zm++;
+        }
+        const html = await page.evaluate(() => document.body.innerHTML);
+        const $ = await cheerio.load(html);
+
+
+        const  homes= $("article").map((i,element)=>{
             let name=$(element).attr("aria-label");
             let link = $(element).find("a").attr("href");
             let cena = $(element).find('span._lf05o').attr("aria-label");
@@ -50,7 +54,7 @@ async function scrapHomeIndex(url,page){
                      
             let cena_dost=resReg(cena_d,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/gm);
             let cena_prod=resReg(cena,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/gm);
-            console.log(cena_prod);
+            
             // cena_d=cena_dost[0];
 
             // ilosc_z=resReg(ilosc_z,/\d|\d\d|\d\d\d|\d\d\d\d|\d\d\d\d\d/);
@@ -70,93 +74,75 @@ async function scrapHomeIndex(url,page){
            
                     // let c=i+';'+';'+s+';'+name+';'+cena+';'+cena_d+';'+ilosc_z+';'+link;
             if(name!=undefined){
-                return {id,ads,name,cena,cena_dost,ilosc_z,link,smart,quot};
+                return {id,ads,name,cena,cena_dost,cena_prod,ilosc_z,link,smart,quot};
             }
 
     }).get();
-   
-        
- 
-    
-    return homes;
-     
-    }catch(err){
-        console.log(err);
-    }
-    
-}
 
-async function getAdress(url){
-    try{
 
-        const page =await broswer.newPage();
-        await page.goto(url,{waitUntil:"networkidle2"});
-        const html= await page.evaluate(()=>document.body.innerHTML);
-        const $= await cheerio.load(html);
 
-             
-        const  link_category=$('a[data-role="LinkItemAnchor"]').map((i,element)=>{
-            let link=$(element).attr("href");// link do categoerii
-            let link_name=$(element).text();
-            return {link,link_name};
 
-        }).get();
-        return link_category;
 
-    }catch(err){
+        return homes;
+
+    } catch (err) {
         console.log(err);
     }
 
 }
 
-  async function pagePagines(){
-    broswer =await puppeter.launch({headless:false});
-    decriptionpages=await broswer.newPage();
 
-    const link_category=await getAdress(url);
-    
-   
-    let dane;
-    let ogr;
-    // console.log(link_category);
 
-    for(i=0;i<link_category.length;i++){
-        if(i==0){
 
-            dane= await scrapHomeIndex(url,decriptionpages); 
-            // await dateToSave(dane,url_name); 
-            console.log(dane);
-            // ogr=Number(dane[0].quot);
-            // for(j=2;j<=ogr;j++){
-                
-            //           let  curl=url+'&p='+j
-            //             dane= await scrapHomeIndex(curl,decriptionpages); 
-            //             console.log(dane);
-            //             // await dateToSave(dane,url_name); 
-                      
-            // }
-            
-            }
-        // if(i>0){
-        //     // console.log(ogr);
-        //     for(j=2;j<=ogr;j++){
-        //         // console.log(j);
-        //               let  curl='https://allegro.pl'+link_category[i].link+'&p='+j
-        //                 dane= await scrapHomeIndex(curl,decriptionpages); 
-        //                // await dateToSave(dane,link_category[i].link_name); 
-                      
-        //     }
-        //     let curl='https://allegro.pl'+link_category[i].link;
-        //     dane= await scrapHomeIndex(curl,decriptionpages); 
-        //    // await dateToSave(dane,link_category[i].link_name); 
-        //     // console.log(dane);
-        //     ogr=Number(dane[0].quot);
-            
+async function getAdress(link, page) {
+    try {
 
-        // }
+        await page.goto(link, { waitUntil: "networkidle2" });
+        // await page.click('[data-role="accept-consent"]');
+        await page.click('[href="#about-seller"]')
+        // await page.waitForNavigation()
+        await page.waitForSelector('div.mves_qm.m3h2_8')
+        const html = await page.evaluate(() => document.body.innerHTML);
+        const $ = await cheerio.load(html);
+        //    const body = $('body').text();
+        const company = $('div.mves_qm.m3h2_8').text()
+        const pol_sprze=$('[href="#about-seller"]').text();
+        const ocena_prod=$("[data-analytics-view-custom-rating-value]").attr("data-analytics-view-custom-rating-value")
+
+       
+       data_sc =`${Date()}`.slice(4,15);
+
+       return {data_sc,company,ocena_prod,pol_sprze}
+
+
+    } catch (err) {
+        console.log(err);
     }
 
+}
+
+async function pagePagines() {
+    let proxy="zporxy"
+
+    broswer = await puppeter.launch({ headless: false,
+        args: [`"--proxy-server =${proxy}"`]
+    });
+    decriptionpages = await broswer.newPage();
+    const dane = await scrapHomeIndex(data)
+    console.log(dane)
+    // const sprz=await getAdress(dane[0].link, decriptionpages)
     
+    // cos = Object.assign(dane[0], sprz);
+    // console.log(cos); 
+    
+    // console.log(dane)
+    // for (i = 0; i < dane.length; i++) {
+    //    await getAdress(dane[i].link, decriptionpages)
+
+
+    // }
+   
+
 
 }
 pagePagines();

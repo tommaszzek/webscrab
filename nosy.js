@@ -2,12 +2,20 @@ const puppeter = require('puppeteer');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const { find } = require('cheerio/lib/api/traversing');
+const ObjectsToCsv = require('objects-to-csv');
 
 
 const data = 'https://allegro.pl/kategoria/czesci-do-laptopow-77801?order=qd';
 let broswer;
 let decriptionpages;
 let zm = 0;
+async function dateToSave(data,name){
+    
+    new ObjectsToCsv(data).toDisk(`./data/${name}.csv`, { append: true }); //dodawanie do pliku
+    // new ObjectsToCsv(sampleData).toDisk(`./${name}.csv`); // tworzy nowey plik bez dodawania 
+
+}
+
 
 async function scrapHomeIndex(url) {
     try {
@@ -54,11 +62,15 @@ async function scrapHomeIndex(url) {
 
 }
 
-function returnREGEXP(text, regex) {
+
+function resReg(text,reg) {  
     const regres=text.match(reg);
     let result='0';
        if(regres[0]!=null) {result=regres[0]} else {result=0;}
-    return result;   
+    return result;     
+// searching the phone number pattern
+// const regex2 = /(\d{3})\D(\d{3})-(\d{4})/g;
+// const result3 = regex2.exec('My phone number is: 555 123-4567.');
 
 }
 
@@ -74,13 +86,13 @@ async function getAdress(link, page) {
         const $ = await cheerio.load(html);
         //    const body = $('body').text();
         const company = $('div.mves_qm.m3h2_8').text()
-        const polec_sprze=$('[href="#about-seller"]').text();
+        const pol_sprze=$('[href="#about-seller"]').text();
         const ocena_prod=$("[data-analytics-view-custom-rating-value]").attr("data-analytics-view-custom-rating-value")
 
-       const pol_sprdze= returnREGEXP(polec_sprze,/\d,d{2}|\d{2},\d{2}/gm)
-       data_sc = new Date();
+       
+       data_sc =`${Date()}`.slice(4,15);
 
-       return {data_sc,company,ocena_prod,polec_sprze}
+       return {data_sc,company,ocena_prod,pol_sprze}
 
 
     } catch (err) {
@@ -98,13 +110,10 @@ async function pagePagines() {
     decriptionpages = await broswer.newPage();
     const dane = await scrapHomeIndex(data)
     
-   sprze=await getAdress(dane[0].link, decriptionpages)
-   
+    const sprz=await getAdress(dane[0].link, decriptionpages)
     
-
-    
-     dane[0] = Object.assign(dane[0], sprze);
-     console.log(dane[0]);
+    cos = Object.assign(dane[0], sprz);
+    console.log(cos); 
     
     // console.log(dane)
     // for (i = 0; i < dane.length; i++) {
