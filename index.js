@@ -1,7 +1,7 @@
 const puppeter = require('puppeteer');
 const cheerio = require('cheerio');
 const fs = require('fs');
-const { find } = require('cheerio/lib/api/traversing');
+// const { find } = require('cheerio/lib/api/traversing');
 const ObjectsToCsv = require('objects-to-csv');
 
 
@@ -15,14 +15,40 @@ async function dateToSave(data,name){
     // new ObjectsToCsv(sampleData).toDisk(`./${name}.csv`); // tworzy nowey plik bez dodawania 
 
 }
-function resReg(text,reg) {  
-    const regres=text.match(reg);
-    let result='0';
-       if(regres[0]!=null) {result=regres[0]} else {result=0;}
-    return result;     
-// searching the phone number pattern
-// const regex2 = /(\d{3})\D(\d{3})-(\d{4})/g;
-// const result3 = regex2.exec('My phone number is: 555 123-4567.');
+function resRegNumberInt(text) { 
+    if(text!=null){
+        let reg=/[0-9] o|[0-9]{2} o|[0-9]{3} o|[0-9]{4} o/gm
+        let reg_c =new RegExp(reg)
+        let regres=reg_c.exec(text)
+        // console.log(regres[0])
+        let result=0;
+        if(regres!=null) {
+              
+                    reg=/[0-9]{4}|[0-9]{3}|[0-9]{2}|[0-9]/gm
+                    reg_c =new RegExp(reg)
+                    regres=reg_c.exec(regres[0])
+                    result=regres[0]
+                    //  console.log(result)
+                    return result;
+                };
+    }
+     else {return 0}     
+
+
+}
+
+function resReg(text) { 
+    if(text!=null){
+        const reg=/[0-9],[0-9]{2}|[0-9]{2},[0-9]{2}|[0-9]{3},[0-9]{2}|[0-9] [0-9]{3},[0-9]{2}|[0-9]{2} [0-9]{3},[0-9]{2}|[0-9]{4},[0-9]{2}|[0-9]{5},[0-9]{2}/gm
+        const reg_c =new RegExp(reg)
+        const regres=reg_c.exec(text)
+        // console.log(regres)
+        let result=0;
+        if(regres!=null) {result=regres[0]} 
+     return result;
+    }
+     else {return 0}     
+
 
 }
 
@@ -49,32 +75,30 @@ async function scrapHomeIndex(url) {
             let s=$(element).find('span').hasClass('_6a66d_fIdpb');
             let ads;
             if(spon=="Oferta sponsorowana"){ ads=1} else {ads=0}
-
+                
+                let cena_dost
+            if (cena_d==null || cena_d=='darmowa dostawa') {cena_dost=0} else{
+                cena_dost=resReg(cena_d)            }
             
-                     
-            let cena_dost=resReg(cena_d,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/gm);
-            let cena_prod=resReg(cena,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/gm);
+                let cena_produktu=resReg(cena)
             
-            // cena_d=cena_dost[0];
-
-            // ilosc_z=resReg(ilosc_z,/\d|\d\d|\d\d\d|\d\d\d\d|\d\d\d\d\d/);
+                let ilosc_zakupionych=0
+            if (ilosc_z!=null) {ilosc_zakupionych=resRegNumberInt(ilosc_z)}
+       
             
-            // POBIERANIE ZDJECIA ZE STRONY DOPSIAC 
-            // DANE KONTAKTOWE FIRMY 
-            // regexp=/Dane firmy(?:(?!Dane|Konkat).)*Kontakt/gm
-            // reg exp dane format ceny \d,\d\d|\d\d,\d\d|\d\d\d,\d\d|\d\d\d|\d\d\d\d
+                 
            let id=i
            let quot=0;
            let smart
            if(s==true){ smart=1} else {smart=0}
            if(quot==0){
-             let q=$("div[role='navigation']>span").text(); // ilosc podstron na stronie      
+             let q=$("div[role='navigation']>span").text(); // ilosc podstron na stronie z produktami
              quot=q.substr(0,q.length/2);
             }
            
-                    // let c=i+';'+';'+s+';'+name+';'+cena+';'+cena_d+';'+ilosc_z+';'+link;
+                    
             if(name!=undefined){
-                return {id,ads,name,cena,cena_dost,cena_prod,ilosc_z,link,smart,quot};
+                return {id,ads,name,cena_produktu,cena_dost,ilosc_zakupionych,ilosc_z,link,smart,quot};
             }
 
     }).get();
@@ -108,7 +132,7 @@ async function getAdress(link, page) {
         const company = $('div.mves_qm.m3h2_8').text()
         const pol_sprze=$('[href="#about-seller"]').text();
         const ocena_prod=$("[data-analytics-view-custom-rating-value]").attr("data-analytics-view-custom-rating-value")
-
+        // let ilosc_zakupionych=resReg(ilosc_z,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/);
        
        data_sc =`${Date()}`.slice(4,15);
 
@@ -134,7 +158,7 @@ async function pagePagines() {
     
     // cos = Object.assign(dane[0], sprz);
     // console.log(cos); 
-    
+
     // console.log(dane)
     // for (i = 0; i < dane.length; i++) {
     //    await getAdress(dane[i].link, decriptionpages)
