@@ -6,14 +6,17 @@ const ObjectsToCsv = require('objects-to-csv');
 
 
 const data = 'https://allegro.pl/kategoria/czesci-do-laptopow-77801?order=qd';
+const name_cat='czesci_do_laptopow'
 let broswer;
 let decriptionpages;
 let zm = 0;
+
+
 async function dateToSave(data,name){
     
-    new ObjectsToCsv(data).toDisk(`./data/${name}.csv`, { append: true }); //dodawanie do pliku
-    // new ObjectsToCsv(sampleData).toDisk(`./${name}.csv`); // tworzy nowey plik bez dodawania 
-
+    const csv=new ObjectsToCsv(data);
+    csv.toDisk(`./data/${name}.csv`, { append: true });
+    // console.log( await csv.toString())
 }
 function resRegiNTS(text) { 
     if(text!=null){
@@ -163,19 +166,29 @@ async function getAdress(link, page) {
 
 async function pagePagines() {
     let proxy="zporxy"
-    let zapis_object
+    let zapis_object =Array();
 
     broswer = await puppeter.launch({ headless: false,
         args: [`"--proxy-server =${proxy}"`]
     });
     decriptionpages = await broswer.newPage();
+    
+    //======== Pobieranie piewszej listy danych
     const dane = await scrapHomeIndex(data)
     // console.log(dane)
-    const sprz=await getAdress(dane[0].link, decriptionpages)
+    // const sprz=await getAdress(dane[0].link, decriptionpages)
+    // zapis_object = Object.assign(dane[0], sprz);
+
+    //======== Pobieranie informacji o sprzedawcy z listy
+    for(i=0;i<10;i++){
+        const sprz=await getAdress(dane[i].link, decriptionpages)
+        // zapis_object[i]= Object.assign(dane[i], sprz);
+        delete dane[i].quot;
+        zapis_object[i]={...dane[i], ...sprz};
+        
+    }
+    await dateToSave(zapis_object,name_cat);
     
-    zapis_object = Object.assign(dane[0], sprz);
-
-
 
 
 
