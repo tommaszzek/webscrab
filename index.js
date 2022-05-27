@@ -15,6 +15,22 @@ async function dateToSave(data,name){
     // new ObjectsToCsv(sampleData).toDisk(`./${name}.csv`); // tworzy nowey plik bez dodawania 
 
 }
+function resRegiNTS(text) { 
+    if(text!=null){
+        const reg=/[0-9]{2},[0-9]|[0-9],[0-9]|[0-9],[0-9]{2}|[0-9]{2},[0-9]{2}/gm
+        const reg_c =new RegExp(reg)
+        const regres=reg_c.exec(text)
+        // console.log(regres)
+        let result=0;
+        if(regres!=null) {result=regres[0]} 
+     return result;
+    }
+     else {return 0}     
+
+
+}
+
+
 function resRegNumberInt(text) { 
     if(text!=null){
         let reg=/[0-9] o|[0-9]{2} o|[0-9]{3} o|[0-9]{4} o/gm
@@ -98,7 +114,7 @@ async function scrapHomeIndex(url) {
            
                     
             if(name!=undefined){
-                return {id,ads,name,cena_produktu,cena_dost,ilosc_zakupionych,ilosc_z,link,smart,quot};
+                return {link,id,ads,name,cena_produktu,cena_dost,ilosc_zakupionych,smart,quot};
             }
 
     }).get();
@@ -131,12 +147,12 @@ async function getAdress(link, page) {
         //    const body = $('body').text();
         const company = $('div.mves_qm.m3h2_8').text()
         const pol_sprze=$('[href="#about-seller"]').text();
-        const ocena_prod=$("[data-analytics-view-custom-rating-value]").attr("data-analytics-view-custom-rating-value")
-        // let ilosc_zakupionych=resReg(ilosc_z,/\d,d{2}|\d{2},\d{2}|\d{3},\d{2}|\d \d\d\d,\d{2}|\d{2} \d\d\d,\d{2}||\d{3} \d\d\d,\d{2}/);
-       
+        const ocena_produkt=$("[data-analytics-view-custom-rating-value]").attr("data-analytics-view-custom-rating-value")
+        const ocena_sprzedawcy=resRegiNTS(pol_sprze);
+    
        data_sc =`${Date()}`.slice(4,15);
 
-       return {data_sc,company,ocena_prod,pol_sprze}
+       return {data_sc,company,ocena_produkt,ocena_sprzedawcy}
 
 
     } catch (err) {
@@ -147,25 +163,20 @@ async function getAdress(link, page) {
 
 async function pagePagines() {
     let proxy="zporxy"
+    let zapis_object
 
     broswer = await puppeter.launch({ headless: false,
         args: [`"--proxy-server =${proxy}"`]
     });
     decriptionpages = await broswer.newPage();
     const dane = await scrapHomeIndex(data)
-    console.log(dane)
-    // const sprz=await getAdress(dane[0].link, decriptionpages)
-    
-    // cos = Object.assign(dane[0], sprz);
-    // console.log(cos); 
-
     // console.log(dane)
-    // for (i = 0; i < dane.length; i++) {
-    //    await getAdress(dane[i].link, decriptionpages)
+    const sprz=await getAdress(dane[0].link, decriptionpages)
+    
+    zapis_object = Object.assign(dane[0], sprz);
 
 
-    // }
-   
+
 
 
 }
